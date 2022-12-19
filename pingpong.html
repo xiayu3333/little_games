@@ -16,21 +16,23 @@
     /* Define the speed and number of bricks in different levels */
 
     class Level {
-        constructor(dx, dy, brickRowCount, brickColumnCount, ballRadius, paddleWidth) {
+        constructor(dx, dy, brickRowCount, brickColumnCount, ballRadius, paddleWidth, brickWidth, brickHeight) {
             this.dx = dx;
             this.dy = dy;
             this.brickRowCount = brickRowCount;
             this.brickColumnCount = brickColumnCount;
             this.ballRadius = ballRadius;
             this.paddleWidth = paddleWidth;
+            this.brickWidth = brickWidth;
+            this.brickHeight = brickHeight;
         }
 
     }
 
     const Levels = [                     // An array 
-        new Level(2, -2, 5, 3, 10,75),
-        new Level(3, -3, 5, 3, 8, 65),
-        new Level(4, -4, 5, 3, 6, 55)
+        new Level(2, -2, 5, 3, 10,75, 75, 20),
+        new Level(3, -3, 5, 3, 8, 65, 65, 20),
+        new Level(4, -4, 5, 3, 6, 55, 55, 20)
     ]
 
     /* Difficulty management */
@@ -42,6 +44,10 @@
     var dy = Levels[currentLevel].dy;
     var ballRadius = Levels[currentLevel].ballRadius;
     var paddleWidth = Levels[currentLevel].paddleWidth;
+    var brickWidth = Levels[currentLevel].brickWidth;
+    var brickHeight = Levels[currentLevel].brickHeight;
+
+
 
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
@@ -51,8 +57,6 @@
     var paddleX = (canvas.width-paddleWidth)/2;
     var rightPressed = false;
     var leftPressed = false;
-    var brickWidth = 75;
-    var brickHeight = 20;
     var brickPadding = 10;
     var brickOffsetTop = 30;
     var brickOffsetLeft = 30;
@@ -64,16 +68,10 @@
     var freeze = false;
 
     
-    /* bricks */
+    /* init bricks */
     var bricks = [];
-    for(var c=0; c<brickColumnCount; c++) {
-        bricks[c] = [];
-        for(var r=0; r<brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 1 };
-        }
-    }
+    initBricks();
     
-
     
     /* event listeners */
     document.addEventListener("keydown", keyDownHandler, false);
@@ -103,10 +101,22 @@
             leftPressed = false;
         }
     }
+
+
+
     function mouseMoveHandler(e) {
         var relativeX = e.clientX - canvas.offsetLeft;
         if(relativeX > 0 && relativeX < canvas.width) {
             paddleX = relativeX - paddleWidth/2;
+        }
+    }
+
+    function initBricks(){
+        for(var c=0; c<brickColumnCount; c++) {
+            bricks[c] = [];
+            for(var r=0; r<brickRowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
         }
     }
 
@@ -118,15 +128,10 @@
         dy = Levels[currentLevel].dy;
         ballRadius = Levels[currentLevel].ballRadius;
         paddleWidth = Levels[currentLevel].paddleWidth;
+        brickWidth = Levels[currentLevel].brickWidth;
+        brickHeight = Levels[currentLevel].brickHeight;
 
-
-
-        for(var c=0; c<brickColumnCount; c++) {
-            bricks[c] = [];
-            for(var r=0; r<brickRowCount; r++) {
-                bricks[c][r] = { x: 0, y: 0, status: 1 };
-            }
-        }
+        initBricks();
     }
 
     function collisionDetection(dx, dy) {
@@ -242,9 +247,6 @@
         drawLives();
         drawLevel();
         collisionDetection();
-
-        
-
 
         if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
             dx = -dx;
