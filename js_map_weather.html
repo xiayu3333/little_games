@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Weather Map</title>
+ 	 <!--Google Icons -->
+  <link  rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+     crossorigin=""/>
+
+	 <!-- Make sure you put this AFTER Leaflet's CSS-->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+ 			integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+ 			crossorigin=""></script>
+  
+</head>
+
+
+<body >
+  <h1>Simple Weather Map</h1>
+  <button type="button" onclick="getAll()">Fetch</button>
+  <div id="map" style="width:800px; height:600px;"></div>
+ 
+  
+  <script>
+	const coordinates = {
+		toulouse: [43.6, 1.43]
+	}
+
+	const key_weatherAPI = "507c94f604f9403bb88101301230301";   // https://www.weatherapi.com/api-explorer.aspx
+
+	var cities = ["Toulouse", "Blagnac", "Colomiers", "Aussonne"];
+
+	const icon_rain = L.divIcon({
+		html: '<span class="material-symbols-outlined" style= "font-size: 36px;" >rainy</span>',
+		iconSize: [40, 40],
+		className: 'custom-div-icon',
+      
+	});
+
+	const icon_cloud = L.divIcon({
+		html: '<span class="material-symbols-outlined" style= "font-size: 36px;" >cloudy</span>',
+		iconSize: [40, 40],
+		className: 'custom-div-icon',
+      
+	});
+
+	function getAll(){
+		for (let i=0; i< cities.length; i ++){
+			getWeather(i);
+		}
+	}
+
+
+
+	async function getWeather(index) {
+		var url = "http://api.weatherapi.com/v1/current.json?key=" + key_weatherAPI + "&q=" + cities[index] + " &aqi=no";
+
+		const response = await fetch(url, {
+			method: 'POST', // *GET, POST, PUT, DELETE, etc.
+			mode: 'cors', // no-cors, *cors, same-origin
+			cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+			credentials: 'same-origin', // include, *same-origin, omit
+			headers: {
+			'Content-Type': 'application/json'
+			},
+			redirect: 'follow', // manual, *follow, error
+			referrerPolicy: 'no-referrer'
+		});
+
+		var station = await response.json();
+		console.log(station);
+		placeIcon(station);
+		
+	}
+
+
+
+	var map = L.map('map').setView(coordinates.toulouse, 13);
+
+	var base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+	var iconGourp = L.layerGroup();
+
+	var layerControl = L.control.layers().addTo(map);
+	layerControl.addOverlay(iconGourp, "All Stations");
+
+	function placeIcon(station){
+		var name = station.location.name;
+		var lat = station.location.lat;
+		var lon = station.location.lon;
+		var temp = station.current.temp_c;
+		var cond = station.current.condition.text;
+
+		console.log(name, lat, lon, temp, cond);
+
+
+		var marker = L.marker([lat, lon],{ icon:  icon_cloud}).addTo(map)
+			.bindPopup(name + "<br>" + temp +  "<br>" + cond);
+
+		layerControl.addOverlay(marker, name);
+
+		iconGourp.addLayer(marker);
+	}
+
+
+
+  </script>
+
+
+
+</body>
+</html>

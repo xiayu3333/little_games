@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<head> </head>
+<body>
+  <label>Flights:</label>
+  <input type="file" accept=".csv" onchange="showFile(this)"/>
+  <br />
+
+  <label>Types:</label>
+  <input type="file" accept=".csv" onchange="showFile(this, false)"/>
+  <br />
+
+  <button onclick="cal()">Click me</button>
+  <br />
+
+  <p id="display">  </p>
+
+
+
+  <script>
+    var flights;
+    var types;
+
+
+    function showFile(input, toArray = true) {
+      let file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const text = e.target.result;
+        if (toArray){flights = csv2Array(text)}else{types = csv2Object(text)}
+        var data = toArray? csv2Array(text) : csv2Object(text);
+        console.log(data);
+      };
+      
+      reader.readAsText(file);
+
+    }
+
+    function cal(){
+      if ( typeof(flights) !== "undefined"  &&  typeof(types) !== "undefined" ){
+        console.log(good);
+
+      }else{
+        alert("Two inputs required!");
+      }
+    }
+
+
+
+    function csv2Array(str, delimiter = ",") {
+      const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
+      const rows = str.slice(str.indexOf("\n") + 1).split("\n");
+      const arr = rows.map(function (row) {
+        const values = row.split(delimiter);
+        const el = headers.reduce(function (object, header, index) {
+          object[header] = values[index];
+          return object;
+        }, {});
+        return el;
+      });
+
+      return arr;
+}
+
+
+    function csv2Object(text) {
+      let jsObj = [];
+      let shelters = text.split('\n')
+      for (let attributes of shelters) {
+          let data = attributes.split(';');
+          jsObj.push(data)
+      }
+      return jsObj;
+    }
+
+</script>
+
+  </script>
+</body>
