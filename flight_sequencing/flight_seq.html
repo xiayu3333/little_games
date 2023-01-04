@@ -1,8 +1,16 @@
 <!DOCTYPE html>
-<head> </head>
+<head> 
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    </style>
+
+</head>
 <body>
   <label>Flights:</label>
-  <input type="file" accept=".csv" onchange="showFile(this)"/>
+  <input type="file" accept=".csv" onchange="showFile(this, true)"/>
   <br />
 
   <label>Types:</label>
@@ -14,22 +22,41 @@
 
   <p id="display">  </p>
 
+  <table>
+    <tbody id="tbody" ></tbody>
+  </table>
+
 
 
   <script>
     var flights;
     var types;
 
+    var wake = {
+      H:{ H:120, M: 240, L:360 },
+      M:{ H:120, M: 120, L:240 },
+      L:{ H:120, M: 120, L:120 }
 
-    function showFile(input, toArray = true) {
+    }
+
+
+    function showFile(input, toArray) {
       let file = input.files[0];
       const reader = new FileReader();
 
       reader.onload = function (e) {
         const text = e.target.result;
-        if (toArray){flights = csv2Array(text)}else{types = csv2Object(text)}
-        var data = toArray? csv2Array(text) : csv2Object(text);
-        console.log(data);
+
+        if (toArray){
+          flights = csv2Array(text);
+          //var flights = flights.map(val => val.replace(/\r$/, ''));  // remove '\r'
+          time2Int(flights);
+          sortArr(flights);
+          console.log(flights);
+        }else{
+          types = csv2Object(text);
+
+        }
       };
       
       reader.readAsText(file);
@@ -38,8 +65,9 @@
 
     function cal(){
       if ( typeof(flights) !== "undefined"  &&  typeof(types) !== "undefined" ){
-        console.log(good);
-
+        var results = sequence();
+        //document.getElementById("display").innerHTML = flights;
+        renderTable(flights);
       }else{
         alert("Two inputs required!");
       }
@@ -47,9 +75,9 @@
 
 
 
-    function csv2Array(str, delimiter = ",") {
-      const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
-      const rows = str.slice(str.indexOf("\n") + 1).split("\n");
+    function csv2Array(str, delimiter = ",", newLine = "\r\n") {     // in win, new line = "\r\n"
+      const headers = str.slice(0, str.indexOf(newLine)).split(delimiter);
+      const rows = str.slice(str.indexOf(newLine) + 1).split(newLine);
       const arr = rows.map(function (row) {
         const values = row.split(delimiter);
         const el = headers.reduce(function (object, header, index) {
@@ -67,11 +95,81 @@
       let jsObj = [];
       let shelters = text.split('\n')
       for (let attributes of shelters) {
-          let data = attributes.split(';');
+          let data = attributes.split(',');
           jsObj.push(data)
       }
-      return jsObj;
+      return arr2dict(jsObj);
     }
+
+
+    function arr2dict(arr){
+      var dict = {};
+      for(let a of arr){
+        dict[a[0]] = a[1];
+      }
+
+      return dict;
+    }
+
+    function sortArr(arr){
+      arr.sort(function(a, b){
+        return a.time - b.time
+      });
+    }
+
+    function time2Int(arr){
+      for (let a of arr){
+        a.time = parseInt(a.time);
+      }
+    }
+
+
+    function sequence(){
+      var results = [];
+      for(let i=0; i<flights.length; i++){
+        var result = flights[i];
+        
+        if (i==0){
+          result.planned = result.time;
+        }else{
+          var cat0 = types[flights[i-1].actype];
+          var cat1 = types[flights[i].actype];
+          var sep = wake[cat0][cat1];
+          console.log(sep);
+
+          if (results[i-1].planned + sep <= result.time){
+            result.planned = result.time;
+          } else{
+            result.planned = results[i-1].planned + sep;
+          }
+        }
+
+        results.push(result);
+      
+      }
+      
+      return results;
+    }
+
+    function renderTable(obj){
+      var tbody = document.getElementById('tbody');
+
+      for (var i = 0; i < obj.length; i++) {
+          var tr = "<tr>";
+          if (i == 0){
+            tr += "<td>id</td><td>time_planned</td><td>category</td><td>time_sequenced</td></tr>";
+          }
+
+          tr += "<td>" + obj[i].id + "</td><td>" + 
+                          obj[i].time + "</td><td>" + 
+                          types[obj[i].actype] +  "</td><td>" + 
+                          obj[i].planned + "</td></tr>";
+          /* We add the table row to the table body */
+          tbody.innerHTML += tr;
+
+      }
+    }
+
 
 </script>
 
